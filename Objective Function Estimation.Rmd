@@ -9,15 +9,40 @@ library("readxl")
 data <- read_excel("Complied Data.xlsx")
 ```
 
-```{r}
+```{r Defining variables}
 netneg <- data$`Net negativity score`
-inf_f_2 = data$fccpiiq2
-inf_f_2sq = inf_f_2^2
-inf_f_4 = data$fccpiiq4
-inf_f_4sq = inf_f_4^2
-gdp_f_2 = data$fcgdpq2
-gdp_f_4 = data$fcgdpq4
-model <- lm(netneg ~ inf_f_2+inf_f_2sq + gdp_f_2 , data = data)
-model
+inf_f_2 <- data$fccpiiq2
+inf_f_2sq <- inf_f_2^2
+inf_f_4 <- data$fccpiiq4
+inf_f_4sq <- inf_f_4^2
+gdp_f_2 <- data$fcgdpq2
+gdp_f_4 <- data$fcgdpq4
+phillowe <- data$`Phillip Lowe`
 ```
 
+```{r Baseline regression - 2 quarters ahead}
+
+# Linear regression model with 2 quarter ahead inflation, and its squared term, and a fixed effects for governor
+
+model_inf_2q <- lm(netneg ~ inf_f_2+inf_f_2sq + phillowe , data = data)
+summary(model_inf_2q)
+
+#The estimate for the inflation target, and standard error using delta method
+
+model_inf_2q_est <- -coef(model_inf_2q)[2]/(2*coef(model_inf_2q)[3])
+model_inf_2q_est
+
+```
+
+```{r Baseline regression - 4 quarters ahead}
+
+# Linear regression model with 4 quarter ahead inflation, and its squared term, and a fixed effects for governor
+
+model_inf_4q <- lm(netneg ~ inf_f_4+inf_f_4sq + phillowe , data = data)
+summary(model_inf_4q)
+
+#The estimate for the inflation target, and standard error using delta method
+
+model_inf_4q_est <- -coef(model_inf_4q)[2]/(2*coef(model_inf_4q)[3])
+model_inf_4q_est
+```
