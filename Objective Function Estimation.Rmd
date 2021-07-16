@@ -17,14 +17,19 @@ inf_f_4 <- data$fccpiiq4
 inf_f_4sq <- inf_f_4^2
 gdp_f_2 <- data$fcgdpq2
 gdp_f_4 <- data$fcgdpq4
+ur_f_2 <- data$fcurq2
+ur_f_2sq <- ur_f_2^2
+ur_f_4 <- data$fcurq4
+ur_f_4sq <- ur_f_4^2
+
 phillowe <- data$`Phillip Lowe`
 ```
 
-```{r Baseline regression - 2 quarters ahead}
+```{r Baseline regression with inflation only - 2 quarters ahead}
 
 # Linear regression model with 2 quarter ahead inflation, and its squared term, and a fixed effects for governor
 
-model_inf_2q <- lm(netneg ~ inf_f_2+inf_f_2sq + phillowe , data = data)
+model_inf_2q <- lm(netneg ~ inf_f_2+inf_f_2sq + phillowe, data = data)
 summary(model_inf_2q)
 
 #The estimate for the inflation target, and standard error using delta method
@@ -34,7 +39,7 @@ model_inf_2q_est
 
 ```
 
-```{r Baseline regression - 4 quarters ahead}
+```{r Baseline regression with inflation only - 4 quarters ahead}
 
 # Linear regression model with 4 quarter ahead inflation, and its squared term, and a fixed effects for governor
 
@@ -45,4 +50,20 @@ summary(model_inf_4q)
 
 model_inf_4q_est <- -coef(model_inf_4q)[2]/(2*coef(model_inf_4q)[3])
 model_inf_4q_est
+```
+
+```{r Estimating both inflation target and NAIRU - 2 quarters ahead}
+
+# Linear regression model with 2 quarter ahead inflation, and its squared term, and a fixed effects for governor
+
+model_inf_NAIRU_2q <- lm(netneg ~ inf_f_2+inf_f_2sq + phillowe + ur_f_2+ur_f_2sq, data = data)
+summary(model_inf_NAIRU_2q)
+
+#The estimate for the inflation target, and standard error using delta method
+
+model_inf_NAIRU_2q_est_inf <- -coef(model_inf_2q)[2]/(2*coef(model_inf_2q)[3])
+model_inf_NAIRU_2q_est_inf
+
+model_inf_NAIRU_2q_est_NAIRU <- -coef(model_inf_2q)[5]/(2*coef(model_inf_2q)[6])
+model_inf_NAIRU_2q_est_NAIRU
 ```
