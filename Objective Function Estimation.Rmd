@@ -5,65 +5,526 @@ output: pdf_document
 
 ```{r Setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library("tidyverse")
 library("readxl")
+library("msm")
+library("stargazer")
+library("lmtest")
+library("sandwich")
 data <- read_excel("Complied Data.xlsx")
+data_fcmth <- filter(data, fc_mth == 1)
 ```
 
-```{r Defining variables}
+```{r Defining variables for full dataset}
+# Y variables
 netneg <- data$`Net negativity score`
+netnegur <- data$`Number of negative words including unemploy`
+
+#Inflation
+inf_f_0 <- data$fccpiiq0
+inf_f_1 <- data$fccpiiq1
 inf_f_2 <- data$fccpiiq2
-inf_f_2sq <- inf_f_2^2
+inf_f_3 <- data$fccpiiq3
 inf_f_4 <- data$fccpiiq4
+inf_f_01 <- (inf_f_0+inf_f_1)/2
+inf_f_02 <- (inf_f_0+inf_f_1 + inf_f_2)/3
+inf_f_03 <- (inf_f_0+inf_f_1 + inf_f_2 + inf_f_3)/4
+inf_f_04 <- (inf_f_0+inf_f_1 + inf_f_2 + inf_f_3+inf_f_4)/5
+inf_f_01sq <- inf_f_01^2
+inf_f_02sq <- inf_f_02^2
+inf_f_03sq <- inf_f_03^2
+inf_f_04sq <- inf_f_04^2
+inf_f_0sq <- inf_f_0^2
+inf_f_1sq <- inf_f_1^2
+inf_f_2sq <- inf_f_2^2
+inf_f_3sq <- inf_f_3^2
 inf_f_4sq <- inf_f_4^2
+
+#GDP growth
+gdp_f_0 <- data$fcgdpq0
+gdp_f_1 <- data$fcgdpq1
 gdp_f_2 <- data$fcgdpq2
+gdp_f_3 <- data$fcgdpq3
 gdp_f_4 <- data$fcgdpq4
+gdp_f_01 <- (gdp_f_0+gdp_f_1)/2
+gdp_f_02 <- (gdp_f_0+gdp_f_1 + gdp_f_2)/3
+gdp_f_03 <- (gdp_f_0+gdp_f_1 + gdp_f_2 + gdp_f_3)/4
+gdp_f_04 <- (gdp_f_0+gdp_f_1 + gdp_f_2 + gdp_f_3+gdp_f_4)/5
+gdp_f_01sq <- gdp_f_01^2
+gdp_f_02sq <- gdp_f_02^2
+gdp_f_03sq <- gdp_f_03^2
+gdp_f_04sq <- gdp_f_04^2
+gdp_f_0sq <- gdp_f_0^2
+gdp_f_1sq <- gdp_f_1^2
+gdp_f_2sq <- gdp_f_2^2
+gdp_f_3sq <- gdp_f_3^2
+gdp_f_4sq <- gdp_f_4^2
+
+#Unemployment
+ur_f_0 <- data$fcurq0
+ur_f_1 <- data$fcurq1
 ur_f_2 <- data$fcurq2
-ur_f_2sq <- ur_f_2^2
+ur_f_3 <- data$fcurq3
 ur_f_4 <- data$fcurq4
+ur_f_01 <- (ur_f_0+ur_f_1)/2
+ur_f_02 <- (ur_f_0+ur_f_1 + ur_f_2)/3
+ur_f_03 <- (ur_f_0+ur_f_1 + ur_f_2 + ur_f_3)/4
+ur_f_04 <- (ur_f_0+ur_f_1 + ur_f_2 + ur_f_3+ur_f_4)/5
+ur_f_01sq <- ur_f_01^2
+ur_f_02sq <- ur_f_02^2
+ur_f_03sq <- ur_f_03^2
+ur_f_04sq <- ur_f_04^2
+ur_f_0sq <- ur_f_0^2
+ur_f_1sq <- ur_f_1^2
+ur_f_2sq <- ur_f_2^2
+ur_f_3sq <- ur_f_3^2
 ur_f_4sq <- ur_f_4^2
 
 phillowe <- data$`Phillip Lowe`
 ```
 
-```{r Baseline regression with inflation only - 2 quarters ahead}
+```{r Defining variables for subset of forecast months only}
+# Y variables
+netneg_fcmth <- data_fcmth$`Net negativity score`
+netnegur_fcmth <- data_fcmth$`Number of negative words including unemploy`
 
-# Linear regression model with 2 quarter ahead inflation, and its squared term, and a fixed effects for governor
+#Inflation
+inf_f_0_fcmth <- data_fcmth$fccpiiq0
+inf_f_1_fcmth <- data_fcmth$fccpiiq1
+inf_f_2_fcmth <- data_fcmth$fccpiiq2
+inf_f_3_fcmth <- data_fcmth$fccpiiq3
+inf_f_4_fcmth <- data_fcmth$fccpiiq4
+inf_f_01_fcmth <- (inf_f_0_fcmth+inf_f_1_fcmth)/2
+inf_f_02_fcmth <- (inf_f_0_fcmth+inf_f_1_fcmth + inf_f_2_fcmth)/3
+inf_f_03_fcmth <- (inf_f_0_fcmth+inf_f_1_fcmth + inf_f_2_fcmth + inf_f_3_fcmth)/4
+inf_f_04_fcmth <- (inf_f_0_fcmth+inf_f_1_fcmth + inf_f_2_fcmth + inf_f_3_fcmth+inf_f_4_fcmth)/5
+inf_f_01sq_fcmth <- inf_f_01_fcmth^2
+inf_f_02sq_fcmth <- inf_f_02_fcmth^2
+inf_f_03sq_fcmth <- inf_f_03_fcmth^2
+inf_f_04sq_fcmth <- inf_f_04_fcmth^2
+inf_f_0sq_fcmth <- inf_f_0_fcmth^2
+inf_f_1sq_fcmth <- inf_f_1_fcmth^2
+inf_f_2sq_fcmth <- inf_f_2_fcmth^2
+inf_f_3sq_fcmth <- inf_f_3_fcmth^2
+inf_f_4sq_fcmth <- inf_f_4_fcmth^2
 
-model_inf_2q <- lm(netneg ~ inf_f_2+inf_f_2sq + phillowe, data = data)
-summary(model_inf_2q)
+#GDP growth
+gdp_f_0_fcmth <- data_fcmth$fcgdpq0
+gdp_f_1_fcmth <- data_fcmth$fcgdpq1
+gdp_f_2_fcmth <- data_fcmth$fcgdpq2
+gdp_f_3_fcmth <- data_fcmth$fcgdpq3
+gdp_f_4_fcmth <- data_fcmth$fcgdpq4
+gdp_f_01_fcmth <- (gdp_f_0_fcmth+gdp_f_1_fcmth)/2
+gdp_f_02_fcmth <- (gdp_f_0_fcmth+gdp_f_1_fcmth + gdp_f_2_fcmth)/3
+gdp_f_03_fcmth <- (gdp_f_0_fcmth+gdp_f_1_fcmth + gdp_f_2_fcmth + gdp_f_3_fcmth)/4
+gdp_f_04_fcmth <- (gdp_f_0_fcmth+gdp_f_1_fcmth + gdp_f_2_fcmth + gdp_f_3_fcmth+gdp_f_4_fcmth)/5
+gdp_f_01sq_fcmth <- gdp_f_01_fcmth^2
+gdp_f_02sq_fcmth <- gdp_f_02_fcmth^2
+gdp_f_03sq_fcmth <- gdp_f_03_fcmth^2
+gdp_f_04sq_fcmth <- gdp_f_04_fcmth^2
+gdp_f_0sq_fcmth <- gdp_f_0_fcmth^2
+gdp_f_1sq_fcmth <- gdp_f_1_fcmth^2
+gdp_f_2sq_fcmth <- gdp_f_2_fcmth^2
+gdp_f_3sq_fcmth <- gdp_f_3_fcmth^2
+gdp_f_4sq_fcmth <- gdp_f_4_fcmth^2
 
-#The estimate for the inflation target, and standard error using delta method
+#Unemployment
+ur_f_0_fcmth <- data_fcmth$fcurq0
+ur_f_1_fcmth <- data_fcmth$fcurq1
+ur_f_2_fcmth <- data_fcmth$fcurq2
+ur_f_3_fcmth <- data_fcmth$fcurq3
+ur_f_4_fcmth <- data_fcmth$fcurq4
+ur_f_01_fcmth <- (ur_f_0_fcmth+ur_f_1_fcmth)/2
+ur_f_02_fcmth <- (ur_f_0_fcmth+ur_f_1_fcmth + ur_f_2_fcmth)/3
+ur_f_03_fcmth <- (ur_f_0_fcmth+ur_f_1_fcmth + ur_f_2_fcmth + ur_f_3_fcmth)/4
+ur_f_04_fcmth <- (ur_f_0_fcmth+ur_f_1_fcmth + ur_f_2_fcmth + ur_f_3_fcmth+ur_f_4_fcmth)/5
+ur_f_01sq_fcmth <- ur_f_01_fcmth^2
+ur_f_02sq_fcmth <- ur_f_02_fcmth^2
+ur_f_03sq_fcmth <- ur_f_03_fcmth^2
+ur_f_04sq_fcmth <- ur_f_04_fcmth^2
+ur_f_0sq_fcmth <- ur_f_0_fcmth^2
+ur_f_1sq_fcmth <- ur_f_1_fcmth^2
+ur_f_2sq_fcmth <- ur_f_2_fcmth^2
+ur_f_3sq_fcmth <- ur_f_3_fcmth^2
+ur_f_4sq_fcmth <- ur_f_4_fcmth^2
 
-model_inf_2q_est <- -coef(model_inf_2q)[2]/(2*coef(model_inf_2q)[3])
-model_inf_2q_est
-
+phillowe_fcmth <- data_fcmth$`Phillip Lowe`
 ```
 
-```{r Baseline regression with inflation only - 4 quarters ahead}
+```{r Baseline regression with inflation only - Average of 0-1 quarters ahead}
 
-# Linear regression model with 4 quarter ahead inflation, and its squared term, and a fixed effects for governor
+## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and a fixed effects for governor
 
-model_inf_4q <- lm(netneg ~ inf_f_4+inf_f_4sq + phillowe , data = data)
-summary(model_inf_4q)
+model_inf_01 <- lm(netneg ~ inf_f_01+inf_f_01sq + phillowe)
+lmtest::coeftest(model_inf_01, vcov. = sandwich::vcovHC(model_inf_01, type = 'HC1'))
+#stargazer(model_inf_01,title = "Results",align = TRUE)
 
-#The estimate for the inflation target, and standard error using delta method
+## The estimate for the inflation target
 
-model_inf_4q_est <- -coef(model_inf_4q)[2]/(2*coef(model_inf_4q)[3])
-model_inf_4q_est
+model_inf_01_est <- -coef(model_inf_01)[2]/(2*coef(model_inf_01)[3])
+model_inf_01_est
+
+
+## Delta method standard error and CFI
+
+model_inf_01_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_01),vcovHC(model_inf_01, type = 'HC1'))
+print(model_inf_01_est_se)
+
+n <- 141
+error <- qt(0.975,df = n-1)*model_inf_01_est_se /sqrt(n)
+print(error)
+left_cfi <- model_inf_01_est - error
+right_cfi <- model_inf_01_est + error
+print(left_cfi)
+print(right_cfi)
 ```
 
-```{r Estimating both inflation target and NAIRU - 2 quarters ahead}
+```{r Baseline regression with inflation only - Average of 0-1 quarters ahead, forecast months only}
 
-# Linear regression model with 2 quarter ahead inflation, and its squared term, and a fixed effects for governor
+## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and a fixed effects for governor
 
-model_inf_NAIRU_2q <- lm(netneg ~ inf_f_2+inf_f_2sq + phillowe + ur_f_2+ur_f_2sq, data = data)
-summary(model_inf_NAIRU_2q)
+model_inf_01_fcmth <- lm(netneg_fcmth ~ inf_f_01_fcmth+inf_f_01sq_fcmth + phillowe_fcmth)
+lmtest::coeftest(model_inf_01_fcmth, vcov. = sandwich::vcovHC(model_inf_01_fcmth, type = 'HC1'))
+#stargazer(model_inf_01,title = "Results",align = TRUE)
 
-#The estimate for the inflation target, and standard error using delta method
+## The estimate for the inflation target
 
-model_inf_NAIRU_2q_est_inf <- -coef(model_inf_2q)[2]/(2*coef(model_inf_2q)[3])
-model_inf_NAIRU_2q_est_inf
+model_inf_01_est_fcmth <- -coef(model_inf_01_fcmth)[2]/(2*coef(model_inf_01_fcmth)[3])
+model_inf_01_est_fcmth
 
-model_inf_NAIRU_2q_est_NAIRU <- -coef(model_inf_2q)[5]/(2*coef(model_inf_2q)[6])
-model_inf_NAIRU_2q_est_NAIRU
+
+## Delta method standard error and CFI
+
+model_inf_01_est_se_fcmth <- deltamethod(~-x2/(2*x3),coef(model_inf_01_fcmth),vcovHC(model_inf_01_fcmth, type = 'HC1'))
+print(model_inf_01_est_se_fcmth)
+
+n <- 141
+error <- qt(0.975,df = n-1)*model_inf_01_est_se_fcmth /sqrt(n)
+print(error)
+left_cfi <- model_inf_01_est - error
+right_cfi <- model_inf_01_est + error
+print(left_cfi)
+print(right_cfi)
+```
+
+```{r Regression with inflation and output growth - Average of 0-1 quarters ahead}
+
+## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and output growth average of 0-1 quarter ahead forecast, and a fixed effects for governor
+
+model_inf_gdp_01 <- lm(netneg ~ inf_f_01+inf_f_01sq +gdp_f_01+gdp_f_01sq + phillowe)
+lmtest::coeftest(model_inf_gdp_01, vcov. = sandwich::vcovHC(model_inf_gdp_01, type = 'HC1'))
+#stargazer(model_inf_01,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_gdp_01_est <- -coef(model_inf_gdp_01)[2]/(2*coef(model_inf_gdp_01)[3])
+model_inf_gdp_01_est
+
+## Delta method standard error
+
+model_inf_gdp_01_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_01),vcovHC(model_inf_gdp_01, type = 'HC1'))
+print(model_inf_gdp_01_est_se)
+```
+
+```{r Regression with inflation and output growth - Average of 0-1 quarters ahead, forecast months only}
+
+## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and output growth average of 0-1 quarter ahead forecast, and a fixed effects for governor
+
+model_inf_gdp_01_fcmth <- lm(netneg_fcmth ~ inf_f_01_fcmth+inf_f_01sq_fcmth +gdp_f_01_fcmth+gdp_f_01sq_fcmth + phillowe_fcmth)
+lmtest::coeftest(model_inf_gdp_01_fcmth, vcov. = sandwich::vcovHC(model_inf_gdp_01_fcmth, type = 'HC1'))
+#stargazer(model_inf_01,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_gdp_01_est_fcmth <- -coef(model_inf_gdp_01_fcmth)[2]/(2*coef(model_inf_gdp_01_fcmth)[3])
+model_inf_gdp_01_est_fcmth
+
+## Delta method standard error
+
+model_inf_gdp_01_est_se_fcmth <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_01_fcmth),vcovHC(model_inf_gdp_01_fcmth, type = 'HC1'))
+print(model_inf_gdp_01_est_se_fcmth)
+```
+
+```{r Regression with inflation and unemployment - Average of 0-1 quarters ahead}
+
+## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and unemployment rate, and a fixed effects for governor
+
+model_inf_ur_01 <- lm(netneg ~ inf_f_01+inf_f_01sq +ur_f_01+ur_f_01sq + phillowe)
+lmtest::coeftest(model_inf_ur_01, vcov. = sandwich::vcovHC(model_inf_ur_01, type = 'HC1'))
+#stargazer(model_inf_01,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_ur_01_est <- -coef(model_inf_ur_01)[2]/(2*coef(model_inf_ur_01)[3])
+model_inf_ur_01_est
+
+## Delta method standard error
+
+model_inf_ur_01_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_ur_01),vcovHC(model_inf_ur_01, type = 'HC1'))
+print(model_inf_ur_01_est_se)
+
+## Estimate for NAIRU
+
+model_inf_ur_01_est_NAIRU <- -coef(model_inf_ur_01)[4]/(2*coef(model_inf_ur_01)[5])
+print(model_inf_ur_01_est_NAIRU)
+
+## Delta method standard error
+
+model_inf_ur_01_est_NAIRU_se <- deltamethod(~-x4/(2*x5),coef(model_inf_ur_01),vcov(model_inf_ur_01))
+print(model_inf_ur_01_est_NAIRU_se)
+```
+
+```{r Regression with inflation and unemployment - Average of 0-1 quarters ahead, forecast months only}
+
+## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and unemployment rate, and a fixed effects for governor
+
+model_inf_ur_01_fcmth <- lm(netneg_fcmth ~ inf_f_01_fcmth+inf_f_01sq_fcmth +ur_f_01_fcmth+ur_f_01sq_fcmth + phillowe_fcmth)
+lmtest::coeftest(model_inf_ur_01_fcmth, vcov. = sandwich::vcovHC(model_inf_ur_01_fcmth, type = 'HC1'))
+
+## The estimate for the inflation target
+
+model_inf_ur_01_est_fcmth <- -coef(model_inf_ur_01_fcmth)[2]/(2*coef(model_inf_ur_01_fcmth)[3])
+model_inf_ur_01_est_fcmth
+
+## Delta method standard error
+
+model_inf_ur_01_est_se_fcmth <- deltamethod(~-x2/(2*x3),coef(model_inf_ur_01_fcmth),vcovHC(model_inf_ur_01_fcmth, type = 'HC1'))
+print(model_inf_ur_01_est_se_fcmth)
+
+## Estimate for NAIRU
+
+model_inf_ur_01_est_NAIRU_fcmth <- -coef(model_inf_ur_01_fcmth)[4]/(2*coef(model_inf_ur_01_fcmth)[5])
+print(model_inf_ur_01_est_NAIRU_fcmth)
+
+## Delta method standard error
+
+model_inf_ur_01_est_NAIRU_se_fcmth <- deltamethod(~-x4/(2*x5),coef(model_inf_ur_01_fcmth),vcov(model_inf_ur_01_fcmth))
+print(model_inf_ur_01_est_NAIRU_se_fcmth)
+```
+
+```{r Regression with inflation and unemployment and GDP - Average of 0-1 quarter ahead}
+
+## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and output growth and unemployment rate, and a fixed effects for governor
+
+model_inf_gdp_ur_01 <- lm(netneg ~ inf_f_01+inf_f_01sq +gdp_f_01 + gdp_f_01sq + ur_f_01 + ur_f_01sq+ phillowe)
+lmtest::coeftest(model_inf_gdp_ur_01, vcov. = sandwich::vcovHC(model_inf_gdp_ur_01, type = 'HC1'))
+#stargazer(model_inf_01,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_gdp_ur_01_est <- -coef(model_inf_gdp_ur_01)[2]/(2*coef(model_inf_gdp_ur_01)[3])
+model_inf_gdp_ur_01_est
+
+## Delta method standard error
+
+model_inf_gdp_ur_01_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_ur_01),vcovHC(model_inf_gdp_ur_01, type = 'HC1'))
+print(model_inf_gdp_ur_01_est_se)
+```
+
+```{r Regression with inflation and unemployment and GDP - Average of 0-1 quarter ahead, forecast months only}
+
+## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and output growth and unemployment rate, and a fixed effects for governor
+
+model_inf_gdp_ur_01_fcmth <- lm(netneg_fcmth ~ inf_f_01_fcmth+inf_f_01sq_fcmth +gdp_f_01_fcmth+ gdp_f_01sq_fcmth+ ur_f_01_fcmth + ur_f_01sq_fcmth + phillowe_fcmth)
+lmtest::coeftest(model_inf_gdp_ur_01_fcmth, vcov. = sandwich::vcovHC(model_inf_gdp_ur_01_fcmth, type = 'HC1'))
+#stargazer(model_inf_01,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_gdp_ur_01_est_fcmth <- -coef(model_inf_gdp_ur_01_fcmth)[2]/(2*coef(model_inf_gdp_ur_01_fcmth)[3])
+model_inf_gdp_ur_01_est_fcmth
+
+## Delta method standard error
+
+model_inf_gdp_ur_01_est_se_fcmth <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_ur_01_fcmth),vcovHC(model_inf_gdp_ur_01_fcmth, type = 'HC1'))
+print(model_inf_gdp_ur_01_est_se_fcmth)
+```
+
+```{r Baseline regression with inflation only - Average of 0-2 quarters ahead}
+
+## Linear regression model with average of 0-2 quarter ahead inflation, and its squared term, and a fixed effects for governor
+
+model_inf_02 <- lm(netneg ~ inf_f_02+inf_f_02sq + phillowe)
+lmtest::coeftest(model_inf_02, vcov. = sandwich::vcovHC(model_inf_02, type = 'HC1'))
+#stargazer(model_inf_02,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_02_est <- -coef(model_inf_02)[2]/(2*coef(model_inf_02)[3])
+model_inf_02_est
+
+
+## Delta method standard error and CFI
+
+model_inf_02_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_02),vcovHC(model_inf_02, type = 'HC1'))
+print(model_inf_02_est_se)
+
+n <- 141
+error <- qt(0.975,df = n-1)*model_inf_02_est_se /sqrt(n)
+print(error)
+left_cfi <- model_inf_02_est - error
+right_cfi <- model_inf_02_est + error
+print(left_cfi)
+print(right_cfi)
+```
+
+```{r Baseline regression with inflation only - Average of 0-2 quarters ahead, forecast months only}
+
+## Linear regression model with average of 0-2 quarter ahead inflation, and its squared term, and a fixed effects for governor
+
+model_inf_02_fcmth <- lm(netneg_fcmth ~ inf_f_02_fcmth+inf_f_02sq_fcmth + phillowe_fcmth)
+lmtest::coeftest(model_inf_02_fcmth, vcov. = sandwich::vcovHC(model_inf_02_fcmth, type = 'HC1'))
+#stargazer(model_inf_02,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_02_est_fcmth <- -coef(model_inf_02_fcmth)[2]/(2*coef(model_inf_02_fcmth)[3])
+model_inf_02_est_fcmth
+
+
+## Delta method standard error and CFI
+
+model_inf_02_est_se_fcmth <- deltamethod(~-x2/(2*x3),coef(model_inf_02_fcmth),vcovHC(model_inf_02_fcmth, type = 'HC1'))
+print(model_inf_02_est_se_fcmth)
+
+n <- 141
+error <- qt(0.975,df = n-1)*model_inf_02_est_se_fcmth /sqrt(n)
+print(error)
+left_cfi <- model_inf_02_est - error
+right_cfi <- model_inf_02_est + error
+print(left_cfi)
+print(right_cfi)
+```
+
+```{r Regression with inflation and output growth - Average of 0-2 quarters ahead}
+
+## Linear regression model with average of 0-2 quarter ahead inflation, and its squared term, and output growth average of 0-2 quarter ahead forecast, and a fixed effects for governor
+
+model_inf_gdp_02 <- lm(netneg ~ inf_f_02+inf_f_02sq +gdp_f_02+gdp_f_02sq + phillowe)
+lmtest::coeftest(model_inf_gdp_02, vcov. = sandwich::vcovHC(model_inf_gdp_02, type = 'HC1'))
+#stargazer(model_inf_02,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_gdp_02_est <- -coef(model_inf_gdp_02)[2]/(2*coef(model_inf_gdp_02)[3])
+model_inf_gdp_02_est
+
+## Delta method standard error
+
+model_inf_gdp_02_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_02),vcovHC(model_inf_gdp_02, type = 'HC1'))
+print(model_inf_gdp_02_est_se)
+```
+
+```{r Regression with inflation and output growth - Average of 0-2 quarters ahead, forecast months only}
+
+## Linear regression model with average of 0-2 quarter ahead inflation, and its squared term, and output growth average of 0-1 quarter ahead forecast, and a fixed effects for governor
+
+model_inf_gdp_02_fcmth <- lm(netneg_fcmth ~ inf_f_02_fcmth+inf_f_02sq_fcmth +gdp_f_02_fcmth+gdp_f_02sq_fcmth + phillowe_fcmth)
+lmtest::coeftest(model_inf_gdp_02_fcmth, vcov. = sandwich::vcovHC(model_inf_gdp_02_fcmth, type = 'HC1'))
+#stargazer(model_inf_02,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_gdp_02_est_fcmth <- -coef(model_inf_gdp_02_fcmth)[2]/(2*coef(model_inf_gdp_02_fcmth)[3])
+model_inf_gdp_02_est_fcmth
+
+## Delta method standard error
+
+model_inf_gdp_02_est_se_fcmth <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_02_fcmth),vcovHC(model_inf_gdp_02_fcmth, type = 'HC1'))
+print(model_inf_gdp_02_est_se_fcmth)
+```
+
+```{r Regression with inflation and unemployment - Average of 0-2 quarters ahead}
+
+## Linear regression model with average of 0-2 quarter ahead inflation, and its squared term, and unemployment rate, and a fixed effects for governor
+
+model_inf_ur_02 <- lm(netneg ~ inf_f_02+inf_f_02sq +ur_f_02+ur_f_02sq + phillowe)
+lmtest::coeftest(model_inf_ur_02, vcov. = sandwich::vcovHC(model_inf_ur_02, type = 'HC1'))
+#stargazer(model_inf_02,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_ur_02_est <- -coef(model_inf_ur_02)[2]/(2*coef(model_inf_ur_02)[3])
+model_inf_ur_02_est
+
+## Delta method standard error
+
+model_inf_ur_02_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_ur_02),vcovHC(model_inf_ur_02, type = 'HC1'))
+print(model_inf_ur_02_est_se)
+
+## Estimate for NAIRU
+
+model_inf_ur_02_est_NAIRU <- -coef(model_inf_ur_02)[4]/(2*coef(model_inf_ur_02)[5])
+print(model_inf_ur_02_est_NAIRU)
+
+## Delta method standard error
+
+model_inf_ur_02_est_NAIRU_se <- deltamethod(~-x4/(2*x5),coef(model_inf_ur_02),vcov(model_inf_ur_02))
+print(model_inf_ur_02_est_NAIRU_se)
+```
+
+```{r Regression with inflation and unemployment - Average of 0-2 quarters ahead, forecast months only}
+
+## Linear regression model with average of 0-2 quarter ahead inflation, and its squared term, and unemployment rate, and a fixed effects for governor
+
+model_inf_ur_02_fcmth <- lm(netneg_fcmth ~ inf_f_02_fcmth+inf_f_02sq_fcmth +ur_f_02_fcmth+ur_f_02sq_fcmth + phillowe_fcmth)
+lmtest::coeftest(model_inf_ur_02_fcmth, vcov. = sandwich::vcovHC(model_inf_ur_02_fcmth, type = 'HC1'))
+
+## The estimate for the inflation target
+
+model_inf_ur_02_est_fcmth <- -coef(model_inf_ur_02_fcmth)[2]/(2*coef(model_inf_ur_02_fcmth)[3])
+model_inf_ur_02_est_fcmth
+
+## Delta method standard error
+
+model_inf_ur_02_est_se_fcmth <- deltamethod(~-x2/(2*x3),coef(model_inf_ur_02_fcmth),vcovHC(model_inf_ur_02_fcmth, type = 'HC1'))
+print(model_inf_ur_02_est_se_fcmth)
+
+## Estimate for NAIRU
+
+model_inf_ur_02_est_NAIRU_fcmth <- -coef(model_inf_ur_02_fcmth)[4]/(2*coef(model_inf_ur_02_fcmth)[5])
+print(model_inf_ur_02_est_NAIRU_fcmth)
+
+## Delta method standard error
+
+model_inf_ur_02_est_NAIRU_se_fcmth <- deltamethod(~-x4/(2*x5),coef(model_inf_ur_02_fcmth),vcov(model_inf_ur_02_fcmth))
+print(model_inf_ur_02_est_NAIRU_se_fcmth)
+```
+
+```{r Regression with inflation and unemployment and GDP - Average of 0-2 quarter ahead}
+
+## Linear regression model with average of 0-2 quarter ahead inflation, and its squared term, and output growth and unemployment rate, and a fixed effects for governor
+
+model_inf_gdp_ur_02 <- lm(netneg ~ inf_f_02+inf_f_02sq +gdp_f_02 + gdp_f_02sq + ur_f_02 + ur_f_02sq+ phillowe)
+lmtest::coeftest(model_inf_gdp_ur_02, vcov. = sandwich::vcovHC(model_inf_gdp_ur_02, type = 'HC1'))
+#stargazer(model_inf_02,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_gdp_ur_02_est <- -coef(model_inf_gdp_ur_02)[2]/(2*coef(model_inf_gdp_ur_02)[3])
+model_inf_gdp_ur_02_est
+
+## Delta method standard error
+
+model_inf_gdp_ur_02_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_ur_02),vcovHC(model_inf_gdp_ur_02, type = 'HC1'))
+print(model_inf_gdp_ur_02_est_se)
+```
+
+```{r Regression with inflation and unemployment and GDP - Average of 0-2 quarter ahead, forecast months only}
+
+## Linear regression model with average of 0-2 quarter ahead inflation, and its squared term, and output growth and unemployment rate, and a fixed effects for governor
+
+model_inf_gdp_ur_02_fcmth <- lm(netneg_fcmth ~ inf_f_02_fcmth+inf_f_02sq_fcmth +gdp_f_02_fcmth+ gdp_f_02sq_fcmth+ ur_f_02_fcmth + ur_f_02sq_fcmth + phillowe_fcmth)
+lmtest::coeftest(model_inf_gdp_ur_02_fcmth, vcov. = sandwich::vcovHC(model_inf_gdp_ur_02_fcmth, type = 'HC1'))
+#stargazer(model_inf_02,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+model_inf_gdp_ur_02_est_fcmth <- -coef(model_inf_gdp_ur_02_fcmth)[2]/(2*coef(model_inf_gdp_ur_02_fcmth)[3])
+model_inf_gdp_ur_02_est_fcmth
+
+## Delta method standard error
+
+model_inf_gdp_ur_02_est_se_fcmth <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_ur_02_fcmth),vcovHC(model_inf_gdp_ur_02_fcmth, type = 'HC1'))
+print(model_inf_gdp_ur_02_est_se_fcmth)
 ```
