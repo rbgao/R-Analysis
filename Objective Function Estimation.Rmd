@@ -16,7 +16,6 @@ data <- read_excel("Complied Data.xlsx")
 data_fcmth <- filter(data, fc_mth == 1)
 #GFC Dummy
 data$dummy <- ifelse(data$Dates < as.Date("06/01/2009", format = "%M/%d/%Y"), 1, 0)
-GFC <- data$dummy
 ```
 
 ```{r Defining variables for full dataset}
@@ -113,6 +112,34 @@ phillowe <- data$`Phillip Lowe`
 
 #Australian uncertainty index (Caggiano)
 uncertainty <- data$Australia
+
+#Global uncertainty (VIX)
+vix <- data$us_vix
+
+#GFC Dummy
+GFC <- data$dummy
+
+#Commodity price index
+commpi <- data$commpi
+
+#US Fed Funds Rate
+us_ffr <- data$us_ffr
+
+#Nominal Trade Weighted Index
+ntwi <- data$ntwi
+
+#Australian BBB corp bond yield relative to 10-year AGS constant maturity. 
+aus_bbb <- data$sprd_ir_cbb_gb10
+
+#House price variables
+rppi <- data$`Residential Property Price Index ;  Weighted average of eight capital cities ;`
+rppiyeg <- data$RPPIYEG
+
+ehpi <- data$`Established House Price Index ;  Weighted average of eight capital cities ;`
+ehpiyeg <- data$EHPIYEG
+
+adpy <- data$`Attached Dwellings Price Index ;  Weighted average of eight capital cities ;`
+adpyeg <- data$ADPYEG
 ```
 
 ```{r Defining variables for subset of forecast months only}
@@ -528,16 +555,58 @@ lapply(lr_inf_infsq_ur_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$
 
 ```
 
-```{r Regression with inflation and unemployment and GDP, linear GDP growth}
+```{r Regression with inflation and squared term, unemployment, GDP, Australian uncertainty and us_ffr, linear GDP growth}
 
 #Looping over different forecast horizon averages
 n <- 4
 
-lr_inf_infsq_ur_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + GFC, se_type = 'stata'))
+lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
 
-summaries <- lapply(lr_inf_infsq_ur_gdp_gdpsq, summary)
+summaries <- lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, summary)
 lapply(summaries, function(x) x$coefficients[, c(1,4)])
 lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
-lapply(lr_inf_infsq_ur_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+
+```
+
+```{r Regression with inflation and squared term, unemployment, GDP and exchange rate}
+
+#Looping over different forecast horizon averages
+n <- 4
+
+lr_inf_infsq_ur_gdp_ntwi <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + ntwi, se_type = 'stata'))
+
+summaries <- lapply(lr_inf_infsq_ur_gdp_ntwi, summary)
+lapply(summaries, function(x) x$coefficients[, c(1,4)])
+lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
+lapply(lr_inf_infsq_ur_gdp_ntwi, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+
+```
+
+```{r Regression with inflation and squared term, unemployment, GDP and BBB corporate bond yield to 10 year AGS spread}
+
+#Looping over different forecast horizon averages
+n <- 4
+
+lr_inf_infsq_ur_gdp_ausbbb <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + phillowe + aus_bbb + uncertainty, se_type = 'stata'))
+
+summaries <- lapply(lr_inf_infsq_ur_gdp_ausbbb, summary)
+lapply(summaries, function(x) x$coefficients[, c(1,4)])
+lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
+lapply(lr_inf_infsq_ur_gdp_ausbbb, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+
+```
+
+```{r Regression with inflation and squared term, unemployment, GDP and house prices}
+
+#Looping over different forecast horizon averages
+n <- 4
+
+lr_inf_infsq_ur_gdp_ehpiyeg <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x] + ehpi + us_ffr + uncertainty + ntwi, se_type = 'stata'))
+
+summaries <- lapply(lr_inf_infsq_ur_gdp_ehpiyeg, summary)
+lapply(summaries, function(x) x$coefficients[, c(1,4)])
+lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
+lapply(lr_inf_infsq_ur_gdp_ehpiyeg, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
 
 ```
