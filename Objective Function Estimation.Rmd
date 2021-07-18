@@ -29,27 +29,39 @@ inf_f_1 <- data$fccpiiq1
 inf_f_2 <- data$fccpiiq2
 inf_f_3 <- data$fccpiiq3
 inf_f_4 <- data$fccpiiq4
+inf_f_5 <- data$fccpiiq5
+inf_f_6 <- data$fccpiiq6
+
+inf_f_dataframe <- data.frame(inf_f_1, inf_f_2, inf_f_3, inf_f_4, inf_f_5, inf_f_6)
 
 inf_f_0sq <- inf_f_0^2
 inf_f_1sq <- inf_f_1^2
 inf_f_2sq <- inf_f_2^2
 inf_f_3sq <- inf_f_3^2
 inf_f_4sq <- inf_f_4^2
+inf_f_5sq <- inf_f_5^2
+inf_f_6sq <- inf_f_6^2
+
+inf_fsq_dataframe <- data.frame(inf_f_1sq, inf_f_2sq, inf_f_3sq, inf_f_4sq, inf_f_5sq, inf_f_6sq)
 
 #Inflation averages
 inf_f_01 <- (inf_f_0+inf_f_1)/2
 inf_f_02 <- (inf_f_0+inf_f_1 + inf_f_2)/3
 inf_f_03 <- (inf_f_0+inf_f_1 + inf_f_2 + inf_f_3)/4
 inf_f_04 <- (inf_f_0+inf_f_1 + inf_f_2 + inf_f_3+inf_f_4)/5
+inf_f_05 <- (inf_f_0+inf_f_1 + inf_f_2 + inf_f_3+inf_f_4 + inf_f_5)/6
+inf_f_06 <- (inf_f_0+inf_f_1 + inf_f_2 + inf_f_3+inf_f_4 + inf_f_5 + inf_f_6)/7
 
-inf_f_x_dataframe <- data.frame(inf_f_01, inf_f_02, inf_f_03, inf_f_04)
+inf_f_x_dataframe <- data.frame(inf_f_01, inf_f_02, inf_f_03, inf_f_04, inf_f_05, inf_f_06)
 
 inf_f_01sq <- inf_f_01^2
 inf_f_02sq <- inf_f_02^2
 inf_f_03sq <- inf_f_03^2
 inf_f_04sq <- inf_f_04^2
+inf_f_05sq <- inf_f_05^2
+inf_f_06sq <- inf_f_06^2
 
-inf_f_xsq_dataframe <- data.frame(inf_f_01sq, inf_f_02sq, inf_f_03sq, inf_f_04sq)
+inf_f_xsq_dataframe <- data.frame(inf_f_01sq, inf_f_02sq, inf_f_03sq, inf_f_04sq, inf_f_05sq, inf_f_06sq)
 
 #GDP growth
 gdp_f_0 <- data$fcgdpq0
@@ -57,27 +69,39 @@ gdp_f_1 <- data$fcgdpq1
 gdp_f_2 <- data$fcgdpq2
 gdp_f_3 <- data$fcgdpq3
 gdp_f_4 <- data$fcgdpq4
+gdp_f_5 <- data$fcgdpq5
+gdp_f_6 <- data$fcgdpq6
+
+gdp_f_dataframe <- data.frame(gdp_f_1, gdp_f_2, gdp_f_3, gdp_f_4, gdp_f_5, gdp_f_6)
 
 gdp_f_0sq <- gdp_f_0^2
 gdp_f_1sq <- gdp_f_1^2
 gdp_f_2sq <- gdp_f_2^2
 gdp_f_3sq <- gdp_f_3^2
 gdp_f_4sq <- gdp_f_4^2
+gdp_f_5sq <- gdp_f_5^2
+gdp_f_6sq <- gdp_f_6^2
+
+gdp_fsq_dataframe <- data.frame(gdp_f_1sq, gdp_f_2sq, gdp_f_3sq, gdp_f_4sq, gdp_f_5sq, gdp_f_6sq)
 
 #GDP growth averages
 gdp_f_01 <- (gdp_f_0+gdp_f_1)/2
 gdp_f_02 <- (gdp_f_0+gdp_f_1 + gdp_f_2)/3
 gdp_f_03 <- (gdp_f_0+gdp_f_1 + gdp_f_2 + gdp_f_3)/4
 gdp_f_04 <- (gdp_f_0+gdp_f_1 + gdp_f_2 + gdp_f_3+gdp_f_4)/5
+gdp_f_05 <- (gdp_f_0+gdp_f_1 + gdp_f_2 + gdp_f_3+gdp_f_4 + gdp_f_5)/6
+gdp_f_06 <- (gdp_f_0+gdp_f_1 + gdp_f_2 + gdp_f_3+gdp_f_4 + gdp_f_5 + gdp_f_6)/7
 
-gdp_f_x_dataframe <- data.frame(gdp_f_01, gdp_f_02, gdp_f_03, gdp_f_04)
+gdp_f_x_dataframe <- data.frame(gdp_f_01, gdp_f_02, gdp_f_03, gdp_f_04, gdp_f_05, gdp_f_06)
 
 gdp_f_01sq <- gdp_f_01^2
 gdp_f_02sq <- gdp_f_02^2
 gdp_f_03sq <- gdp_f_03^2
 gdp_f_04sq <- gdp_f_04^2
+gdp_f_05sq <- gdp_f_05^2
+gdp_f_06sq <- gdp_f_06^2
 
-gdp_f_xsq_dataframe <- data.frame(gdp_f_01sq, gdp_f_02sq, gdp_f_03sq, gdp_f_04sq)
+gdp_f_xsq_dataframe <- data.frame(gdp_f_01sq, gdp_f_02sq, gdp_f_03sq, gdp_f_04sq, gdp_f_05sq, gdp_f_06sq)
 
 #Unemployment
 ur_f_0 <- data$fcurq0
@@ -85,27 +109,39 @@ ur_f_1 <- data$fcurq1
 ur_f_2 <- data$fcurq2
 ur_f_3 <- data$fcurq3
 ur_f_4 <- data$fcurq4
+ur_f_5 <- data$fcurq5
+ur_f_6 <- data$fcurq6
+
+ur_f_dataframe <- data.frame(ur_f_1, ur_f_2, ur_f_3, ur_f_4, ur_f_5, ur_f_6)
 
 ur_f_0sq <- ur_f_0^2
 ur_f_1sq <- ur_f_1^2
 ur_f_2sq <- ur_f_2^2
 ur_f_3sq <- ur_f_3^2
 ur_f_4sq <- ur_f_4^2
+ur_f_5sq <- ur_f_5^2
+ur_f_6sq <- ur_f_6^2
+
+ur_fsq_dataframe <- data.frame(ur_f_1sq, ur_f_2sq, ur_f_3sq, ur_f_4sq, ur_f_5sq, ur_f_6sq)
 
 #Unemployment averages
 ur_f_01 <- (ur_f_0+ur_f_1)/2
 ur_f_02 <- (ur_f_0+ur_f_1 + ur_f_2)/3
 ur_f_03 <- (ur_f_0+ur_f_1 + ur_f_2 + ur_f_3)/4
 ur_f_04 <- (ur_f_0+ur_f_1 + ur_f_2 + ur_f_3+ur_f_4)/5
+ur_f_05 <- (ur_f_0+ur_f_1 + ur_f_2 + ur_f_3+ur_f_4+ur_f_5)/6
+ur_f_06 <- (ur_f_0+ur_f_1 + ur_f_2 + ur_f_3+ur_f_4+ur_f_5+ur_f_6)/7
 
-ur_f_x_dataframe <- data.frame(ur_f_01, ur_f_02, ur_f_03, ur_f_04)
+ur_f_x_dataframe <- data.frame(ur_f_01, ur_f_02, ur_f_03, ur_f_04, ur_f_05, ur_f_06)
 
 ur_f_01sq <- ur_f_01^2
 ur_f_02sq <- ur_f_02^2
 ur_f_03sq <- ur_f_03^2
 ur_f_04sq <- ur_f_04^2
+ur_f_05sq <- ur_f_05^2
+ur_f_06sq <- ur_f_06^2
 
-ur_f_xsq_dataframe <- data.frame(ur_f_01sq, ur_f_02sq, ur_f_03sq, ur_f_04sq)
+ur_f_xsq_dataframe <- data.frame(ur_f_01sq, ur_f_02sq, ur_f_03sq, ur_f_04sq, ur_f_05sq, ur_f_06sq)
 
 #Dummy variable for governor
 phillowe <- data$`Phillip Lowe`
@@ -132,14 +168,17 @@ ntwi <- data$ntwi
 aus_bbb <- data$sprd_ir_cbb_gb10
 
 #House price variables
-rppi <- data$`Residential Property Price Index ;  Weighted average of eight capital cities ;`
-rppiyeg <- data$RPPIYEG
+rppi <- data$`RPPI (lagged)`
+rppiqg <- data$`RPPIQG (lagged)`
+rppiyeg <- data$`RPPIYEG (lagged)`
 
-ehpi <- data$`Established House Price Index ;  Weighted average of eight capital cities ;`
-ehpiyeg <- data$EHPIYEG
+ehpi <- data$`EHPI (lagged)`
+ehpiqg <- data$`EHPIQG (lagged)`
+ehpiyeg <- data$`EHPIYEG (lagged)`
 
-adpy <- data$`Attached Dwellings Price Index ;  Weighted average of eight capital cities ;`
-adpyeg <- data$ADPYEG
+adpy <- data$`ADP (lagged)`
+adpyqg <- data$`ADPYQG (lagged)`
+adpyeg <- data$`ADPYEG (lagged)`
 ```
 
 ```{r Defining variables for subset of forecast months only}
@@ -241,14 +280,17 @@ uncertainty_fcmth <- data_fcmth$Australia
 ```{r Baseline regression with inflation only}
 
 # Loop over different forecast horizon averages
-n <- 4
+n <- 6
 
 lr_inf_infsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq, summary)
-lapply(summaries, function(x) x$coefficients[, c(1,4)])
-lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
-lapply(lr_inf_infsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+#lapply(summaries, function(x) x$coefficients[, c(1,4)])
+print(lapply(lr_inf_infsq, function(x) coef(summary(x))[,1:4]), digits = 1)
+print(sapply(summaries, function(x) c(r_sq = x$r.squared, 
+                                adj_r_sq = x$adj.r.squared)), digits = 3)
+print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
+print(lapply(lr_inf_infsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov)), digits = 4)
 
 ## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and a fixed effects for governor
 
@@ -269,7 +311,7 @@ lapply(lr_inf_infsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
 
 #n <- 141
 #error <- qt(0.975,df = n-1)*model_inf_01_est_se /sqrt(n)
-#print(error)
+#print(error) 
 #left_cfi <- model_inf_01_est - error
 #right_cfi <- model_inf_01_est + error
 #print(left_cfi)
@@ -284,9 +326,11 @@ n <- 4
 lr_inf_infsq_fcmth <- lapply(1:n,function(x) lm_robust(netneg_fcmth ~ inf_f_x_dataframe_fcmth[,x]+inf_f_xsq_dataframe_fcmth[,x] + phillowe_fcmth, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_fcmth, summary)
-lapply(summaries, function(x) x$coefficients[, c(1,4)])
-lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
-lapply(lr_inf_infsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+print(lapply(lr_inf_infsq_fcmth, function(x) coef(summary(x))[,1:4]), digits = 2)
+print(sapply(summaries, function(x) c(r_sq = x$r.squared, 
+                                adj_r_sq = x$adj.r.squared)), digits = 3)
+print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
+print(lapply(lr_inf_infsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov)), digits = 3)
 
 ## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and a fixed effects for governor
 
@@ -317,14 +361,16 @@ lapply(lr_inf_infsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
 ```{r Regression with inflation and output growth}
 
 #Looping over different forecast horizon averages
-n <- 4
+n <- 6
 
 lr_inf_infsq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x]+gdp_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_gdp_gdpsq, summary)
-lapply(summaries, function(x) x$coefficients[, c(1,4)])
-lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
-lapply(lr_inf_infsq_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+print(lapply(lr_inf_infsq_gdp_gdpsq, function(x) coef(summary(x))[,1:4]), digits = 3)
+print(sapply(summaries, function(x) c(r_sq = x$r.squared, 
+                                adj_r_sq = x$adj.r.squared)), digits = 3)
+print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
+print(lapply(lr_inf_infsq_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov)), digits = 5)
 
 ## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and output growth average of 0-1 quarter ahead forecast, and a fixed effects for governor
 
@@ -375,16 +421,16 @@ lapply(lr_inf_infsq_gdp_gdpsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef,
 ```{r Regression with inflation and unemployment}
 
 #Looping over different forecast horizon averages
-n <- 4
+n <- 6
 
 lr_inf_infsq_ur_ursq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] +ur_f_x_dataframe[,x]+ur_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_ur_ursq, summary)
-lapply(summaries, function(x) x$coefficients[, c(1,4)])
-lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
-lapply(lr_inf_infsq_ur_ursq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
-lapply(summaries, function(x) -x$coef[4]/(2*x$coef[5]))
-lapply(lr_inf_infsq_ur_ursq, function(x) deltamethod(~-x4/(2*x5),x$coef, x$vcov))
+print(lapply(lr_inf_infsq_ur_ursq, function(x) coef(summary(x))[,1:4]), digits = 3)
+print(sapply(summaries, function(x) c(r_sq = x$r.squared, 
+                                adj_r_sq = x$adj.r.squared)), digits = 3)
+print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
+print(lapply(lr_inf_infsq_ur_ursq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov)), digits = 5)
 
 ## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and unemployment rate, and a fixed effects for governor
 
@@ -456,16 +502,16 @@ lapply(lr_inf_infsq_ur_ursq_fcmth, function(x) deltamethod(~-x4/(2*x5),x$coef, x
 ```{r Regression with inflation and unemployment and GDP}
 
 #Looping over different forecast horizon averages
-n <- 4
+n <- 6
 
-lr_inf_infsq_ur_ursq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x] + gdp_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_ur_ursq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_ur_ursq_gdp_gdpsq, summary)
-lapply(summaries, function(x) x$coefficients[, c(1,4)])
-lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
-lapply(lr_inf_infsq_ur_ursq_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
-lapply(summaries, function(x) -x$coef[4]/(2*x$coef[5]))
-lapply(lr_inf_infsq_ur_ursq_gdp_gdpsq, function(x) deltamethod(~-x4/(2*x5),x$coef, x$vcov))
+print(lapply(lr_inf_infsq_ur_ursq_gdp_gdpsq, function(x) coef(summary(x))[,1:4]), digits = 3)
+print(sapply(summaries, function(x) c(r_sq = x$r.squared, 
+                                adj_r_sq = x$adj.r.squared)), digits = 3)
+print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
+print(lapply(lr_inf_infsq_ur_ursq_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov)), digits = 5)
 
 ## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and output growth and unemployment rate, and a fixed effects for governor
 
