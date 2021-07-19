@@ -13,9 +13,45 @@ library("lmtest")
 library("sandwich")
 library("estimatr")
 data <- read_excel("Complied Data.xlsx")
-data_fcmth <- filter(data, fc_mth == 1)
+
+
 #GFC Dummy
-data$dummy <- ifelse(data$Dates < as.Date("06/01/2009", format = "%M/%d/%Y"), 1, 0)
+data$Dates <- strptime(as.character(data$Dates), "%Y-%m-%d") # correct date format
+data$Dates <- format(data$Dates, "%Y-%m-%d") # change to Date variable
+data$pre_gfc <- ifelse(data$Dates <="2007/01/01", 1, 0)
+data$post_gfc <- ifelse(data$Dates >="2009/01/01", 1, 0)
+data$gfc <- ifelse(data$pre_gfc == 0 & data$post_gfc ==0, 1, 0)
+
+# Accounting for increasing or decreasing path of forecasts
+inc_ur_1 <- ifelse(data$fcurq1 >= data$fcurq0,1, 0 )
+inc_gdp_1 <- ifelse(data$fcgdpq1 >= data$fcgdpq0,1, 0 )
+inc_ur_2 <- ifelse(data$fcurq2 >= data$fcurq0,1, 0 )
+inc_gdp_2 <- ifelse(data$fcgdpq2 >= data$fcgdpq0,1, 0 )
+inc_ur_3 <- ifelse(data$fcurq3 >= data$fcurq0,1, 0 )
+inc_gdp_3 <- ifelse(data$fcgdpq3 >= data$fcgdpq0,1, 0 )
+inc_ur_4 <- ifelse(data$fcurq4 >= data$fcurq0,1, 0 )
+inc_gdp_4 <- ifelse(data$fcgdpq4 >= data$fcgdpq0,1, 0 )
+inc_ur_5 <- ifelse(data$fcurq5 >= data$fcurq0,1, 0 )
+inc_gdp_5 <- ifelse(data$fcgdpq5 >= data$fcgdpq0,1, 0 )
+inc_ur_6 <- ifelse(data$fcurq6 >= data$fcurq0,1, 0 )
+inc_gdp_6 <- ifelse(data$fcgdpq6 >= data$fcgdpq0,1, 0 )
+
+dec_ur_1 <- ifelse(inc_ur_1 == 0 ,1, 0 )
+dec_gdp_1 <- ifelse(inc_gdp_1 == 0 ,1, 0 )
+dec_ur_2 <- ifelse(inc_ur_2 == 0 ,1, 0 )
+dec_gdp_2 <- ifelse(inc_gdp_2 == 0 ,1, 0 )
+dec_ur_3 <- ifelse(inc_ur_3 == 0 ,1, 0 )
+dec_gdp_3 <- ifelse(inc_gdp_3 == 0 ,1, 0 )
+dec_ur_4 <- ifelse(inc_ur_4 == 0 ,1, 0 )
+dec_gdp_4 <- ifelse(inc_gdp_4 == 0 ,1, 0 )
+dec_ur_5 <- ifelse(inc_ur_5 == 0 ,1, 0 )
+dec_gdp_5 <- ifelse(inc_gdp_5 == 0 ,1, 0 )
+dec_ur_6 <- ifelse(inc_ur_6 == 0 ,1, 0 )
+dec_gdp_6 <- ifelse(inc_gdp_6 == 0 ,1, 0 )
+
+#Forecast months only
+data_fcmth <- filter(data, fc_mth == 1)
+
 ```
 
 ```{r Defining variables for full dataset}
@@ -94,6 +130,24 @@ gdp_f_06 <- (gdp_f_0+gdp_f_1 + gdp_f_2 + gdp_f_3+gdp_f_4 + gdp_f_5 + gdp_f_6)/7
 
 gdp_f_x_dataframe <- data.frame(gdp_f_01, gdp_f_02, gdp_f_03, gdp_f_04, gdp_f_05, gdp_f_06)
 
+gdp_f_01_inc <- gdp_f_01 * inc_gdp_1
+gdp_f_02_inc <- gdp_f_02 * inc_gdp_2
+gdp_f_03_inc <- gdp_f_03 * inc_gdp_3
+gdp_f_04_inc <- gdp_f_04 * inc_gdp_4
+gdp_f_05_inc <- gdp_f_05 * inc_gdp_5
+gdp_f_06_inc <- gdp_f_06 * inc_gdp_6
+
+gdp_f_xinc_dataframe <- data.frame(gdp_f_01_inc, gdp_f_02_inc, gdp_f_03_inc, gdp_f_04_inc, gdp_f_05_inc, gdp_f_06_inc)
+
+gdp_f_01_dec <- gdp_f_01 * dec_gdp_1
+gdp_f_02_dec <- gdp_f_02 * dec_gdp_2
+gdp_f_03_dec <- gdp_f_03 * dec_gdp_3
+gdp_f_04_dec <- gdp_f_04 * dec_gdp_4
+gdp_f_05_dec <- gdp_f_05 * dec_gdp_5
+gdp_f_06_dec <- gdp_f_06 * dec_gdp_6
+
+gdp_f_xdec_dataframe <- data.frame(gdp_f_01_dec, gdp_f_02_dec, gdp_f_03_dec, gdp_f_04_dec, gdp_f_05_dec, gdp_f_06_dec)
+
 gdp_f_01sq <- gdp_f_01^2
 gdp_f_02sq <- gdp_f_02^2
 gdp_f_03sq <- gdp_f_03^2
@@ -133,6 +187,24 @@ ur_f_05 <- (ur_f_0+ur_f_1 + ur_f_2 + ur_f_3+ur_f_4+ur_f_5)/6
 ur_f_06 <- (ur_f_0+ur_f_1 + ur_f_2 + ur_f_3+ur_f_4+ur_f_5+ur_f_6)/7
 
 ur_f_x_dataframe <- data.frame(ur_f_01, ur_f_02, ur_f_03, ur_f_04, ur_f_05, ur_f_06)
+
+ur_f_01_inc <- ur_f_01 * inc_ur_1
+ur_f_02_inc <- ur_f_02 * inc_ur_2
+ur_f_03_inc <- ur_f_03 * inc_ur_3
+ur_f_04_inc <- ur_f_04 * inc_ur_4
+ur_f_05_inc <- ur_f_05 * inc_ur_5
+ur_f_06_inc <- ur_f_06 * inc_ur_6
+
+ur_f_xinc_dataframe <- data.frame(ur_f_01_inc, ur_f_02_inc, ur_f_03_inc, ur_f_04_inc, ur_f_05_inc, ur_f_06_inc)
+
+ur_f_01_dec <- ur_f_01 * dec_ur_1
+ur_f_02_dec <- ur_f_02 * dec_ur_2
+ur_f_03_dec <- ur_f_03 * dec_ur_3
+ur_f_04_dec <- ur_f_04 * dec_ur_4
+ur_f_05_dec <- ur_f_05 * dec_ur_5
+ur_f_06_dec <- ur_f_06 * dec_ur_6
+
+ur_f_xdec_dataframe <- data.frame(ur_f_01_dec, ur_f_02_dec, ur_f_03_dec, ur_f_04_dec, ur_f_05_dec, ur_f_06_dec)
 
 ur_f_01sq <- ur_f_01^2
 ur_f_02sq <- ur_f_02^2
@@ -286,7 +358,7 @@ lr_inf_infsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+
 
 summaries <- lapply(lr_inf_infsq, summary)
 #lapply(summaries, function(x) x$coefficients[, c(1,4)])
-print(lapply(lr_inf_infsq, function(x) coef(summary(x))[,1:4]), digits = 1)
+print(lapply(lr_inf_infsq, function(x) coef(summary(x))[,1:4]), digits = 5)
 print(sapply(summaries, function(x) c(r_sq = x$r.squared, 
                                 adj_r_sq = x$adj.r.squared)), digits = 3)
 print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
@@ -423,7 +495,7 @@ lapply(lr_inf_infsq_gdp_gdpsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef,
 #Looping over different forecast horizon averages
 n <- 6
 
-lr_inf_infsq_ur_ursq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] +ur_f_x_dataframe[,x]+ur_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_ur_ursq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] +ur_f_x_dataframe[,x]+ur_f_xinc_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_ur_ursq, summary)
 print(lapply(lr_inf_infsq_ur_ursq, function(x) coef(summary(x))[,1:4]), digits = 3)
@@ -504,10 +576,10 @@ lapply(lr_inf_infsq_ur_ursq_fcmth, function(x) deltamethod(~-x4/(2*x5),x$coef, x
 #Looping over different forecast horizon averages
 n <- 6
 
-lr_inf_infsq_ur_ursq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_ur_ursq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x] + gdp_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_ur_ursq_gdp_gdpsq, summary)
-print(lapply(lr_inf_infsq_ur_ursq_gdp_gdpsq, function(x) coef(summary(x))[,1:4]), digits = 3)
+print(lapply(lr_inf_infsq_ur_ursq_gdp_gdpsq, function(x) coef(summary(x))[,1:4]), digits = 4)
 print(sapply(summaries, function(x) c(r_sq = x$r.squared, 
                                 adj_r_sq = x$adj.r.squared)), digits = 3)
 print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
@@ -579,7 +651,7 @@ lapply(lr_inf_infsq_ur_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$
 #Looping over different forecast horizon averages
 n <- 4
 
-lr_inf_infsq_ur_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_ur_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xinc_dataframe[,x] + gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_ur_gdp_gdpsq, summary)
 lapply(summaries, function(x) x$coefficients[, c(1,4)])
