@@ -12,8 +12,11 @@ library("stargazer")
 library("lmtest")
 library("sandwich")
 library("estimatr")
+library("texreg")
 data <- read_excel("Complied Data.xlsx")
 
+#Forecast months only
+#data <- filter(data, fc_mth == 1)
 
 #GFC Dummy
 data$Dates <- strptime(as.character(data$Dates), "%Y-%m-%d") # correct date format
@@ -21,7 +24,8 @@ data$Dates <- format(data$Dates, "%Y-%m-%d") # change to Date variable
 data$pre_gfc <- ifelse(data$Dates <="2007/01/01", 1, 0)
 data$post_gfc <- ifelse(data$Dates >="2009/01/01", 1, 0)
 data$gfc <- ifelse(data$pre_gfc == 0 & data$post_gfc ==0, 1, 0)
-
+post_2012 <- ifelse(data$Dates < "2012/01/01", 0 , 1)
+post_2013 <- ifelse(data$Dates < "2013/01/01", 0 , 1)
 # Accounting for increasing or decreasing path of forecasts
 inc_ur_1 <- ifelse(data$fcurq1 >= data$fcurq0,1, 0 )
 inc_gdp_1 <- ifelse(data$fcgdpq1 >= data$fcgdpq0,1, 0 )
@@ -48,15 +52,13 @@ dec_ur_5 <- ifelse(inc_ur_5 == 0 ,1, 0 )
 dec_gdp_5 <- ifelse(inc_gdp_5 == 0 ,1, 0 )
 dec_ur_6 <- ifelse(inc_ur_6 == 0 ,1, 0 )
 dec_gdp_6 <- ifelse(inc_gdp_6 == 0 ,1, 0 )
-
-#Forecast months only
-data_fcmth <- filter(data, fc_mth == 1)
-
 ```
 
 ```{r Defining variables for full dataset}
 # Y variables
 netneg <- data$`Net negativity score`
+neg <- data$`Percentage negative`
+pos <- data$`Percentage positive`
 netnegur <- data$`Number of negative words including unemploy`
 
 #Inflation
@@ -224,20 +226,32 @@ uncertainty <- data$Australia
 #Global uncertainty (VIX)
 vix <- data$us_vix
 
-#GFC Dummy
-GFC <- data$dummy
-
 #Commodity price index
 commpi <- data$commpi
+commpi_inf_q1 <- data$`Quarterly inflation for commpi`
+commpi_inf_q4 <- data$`Year-ended inflation for commpi`
 
 #US Fed Funds Rate
 us_ffr <- data$us_ffr
 
 #Nominal Trade Weighted Index
 ntwi <- data$ntwi
+ntwiqg <- data$`Quarterly % change in ntwi`
+ntwiyeg <- data$`4 Quarter % change in NTWi`
 
 #Australian BBB corp bond yield relative to 10-year AGS constant maturity. 
 aus_bbb <- data$sprd_ir_cbb_gb10
+
+# Moody’s seasoned BAA corporate bond yield relative to yield on 10-year Treasury constant maturity, obtained from FRED; end of month value
+
+us_baa <- data$sprd_ir_us_cbb_gb10
+
+# Money market spread between 3-month bank-accepted bill (BAB) rate and 3-month Australian dollar overnight indexed swap (OIS) rate (3-month zero-coupon forward rate prior to July 2001); end of month value
+aus_bab <- data$sprd_ir_bab_ois3
+
+# Credit market spread between average large business variable lending rate and 3-month BAB rate; end of month value
+
+business_bab <- data$sprd_ir_lbiz_bab3
 
 #House price variables
 rppi <- data$`RPPI (lagged)`
@@ -251,6 +265,15 @@ ehpiyeg <- data$`EHPIYEG (lagged)`
 adpy <- data$`ADP (lagged)`
 adpyqg <- data$`ADPYQG (lagged)`
 adpyeg <- data$`ADPYEG (lagged)`
+
+# Wage growth variables
+wpi <- data$`WPI (3 month Lag)`
+
+wpiyeg <-data$`WPIYEG ( 3 month lag)`
+wpiqg <- data$`WPIQG (3 month lag)`
+
+wpiyeg_phillowe <- wpiyeg * phillowe
+wpiqg_phillowe <- wpiqg * phillowe
 ```
 
 ```{r Defining variables for subset of forecast months only}
@@ -435,7 +458,7 @@ print(lapply(lr_inf_infsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef, x$v
 #Looping over different forecast horizon averages
 n <- 6
 
-lr_inf_infsq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x]+gdp_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x]+gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_gdp_gdpsq, summary)
 print(lapply(lr_inf_infsq_gdp_gdpsq, function(x) coef(summary(x))[,1:4]), digits = 3)
@@ -495,7 +518,7 @@ lapply(lr_inf_infsq_gdp_gdpsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef,
 #Looping over different forecast horizon averages
 n <- 6
 
-lr_inf_infsq_ur_ursq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] +ur_f_x_dataframe[,x]+ur_f_xinc_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_ur_ursq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] +ur_f_x_dataframe[,x]+ur_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_ur_ursq, summary)
 print(lapply(lr_inf_infsq_ur_ursq, function(x) coef(summary(x))[,1:4]), digits = 3)
@@ -651,7 +674,7 @@ lapply(lr_inf_infsq_ur_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$
 #Looping over different forecast horizon averages
 n <- 4
 
-lr_inf_infsq_ur_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xinc_dataframe[,x] + gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_ur_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_ur_gdp_gdpsq, summary)
 lapply(summaries, function(x) x$coefficients[, c(1,4)])
@@ -673,18 +696,119 @@ lapply(lr_inf_infsq_ur_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$
 
 ```
 
-```{r Regression with inflation and squared term, unemployment, GDP, Australian uncertainty and us_ffr, linear GDP growth}
+```{r Regression with inflation and unemployment and GDP, linear unemployment and interaction term for increasing path of forecasts, and linear GDP growth}
 
 #Looping over different forecast horizon averages
 n <- 4
 
-lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
+lr_inf_infsq_ur_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xinc_dataframe[,x] + gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
 
-summaries <- lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, summary)
+summaries <- lapply(lr_inf_infsq_ur_gdp_gdpsq, summary)
 lapply(summaries, function(x) x$coefficients[, c(1,4)])
 lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
-lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+lapply(lr_inf_infsq_ur_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
+```
 
+```{r Regression with inflation and squared term, unemployment, GDP, Australian uncertainty and us_ffr, linear GDP growth}
+
+#Looping over different forecast horizon averages
+#n <- 4
+
+#lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x]  + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
+#lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
+#lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xinc_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
+
+#summaries <- lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, summary)
+#print(lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, function(x) coef(summary(x))[,1:4]), digits = 4)
+#print(sapply(summaries, function(x) c(r_sq = x$r.squared,                                 adj_r_sq = x$adj.r.squared)), digits = 3)
+#print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
+#print(lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov)), digits = 5)
+
+lr_uncertainty_usffr_ur <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02  + phillowe + ntwiqg +  us_ffr + uncertainty + rppiqg + aus_bbb, se_type = 'stata')
+
+lr_uncertainty_usffr_ursq <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02sq  + phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+
+lr_uncertainty_usffr_urinc <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02_inc  +  phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+
+lr_uncertainty_usffr_ur_gdp <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + gdp_f_02  + phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+
+lr_uncertainty_usffr_ursq_gdp <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02sq  + gdp_f_02 + phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+
+lr_uncertainty_usffr_urinc_gdp <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02_inc + gdp_f_02  +  phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+
+lr_uncertainty_usffr_gdp <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + gdp_f_02 + phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+
+lr_uncertainty_usffr_gdp_gdpsq <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + gdp_f_02 + gdp_f_02sq +  phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+
+lr_uncertainty_usffr_gdp_gdpsq_ur <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + gdp_f_02 + gdp_f_02sq + ur_f_02+  phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+
+#lr_uncertainty_usffr_ur
+#lr_uncertainty_usffr_ursq
+#lr_uncertainty_usffr_urinc
+#lr_uncertainty_usffr_ur_gdp
+#lr_uncertainty_usffr_ursq_gdp
+#lr_uncertainty_usffr_urinc_gdp
+texreg(list(lr_uncertainty_usffr_ur,lr_uncertainty_usffr_ursq, lr_uncertainty_usffr_urinc, lr_uncertainty_usffr_ur_gdp,lr_uncertainty_usffr_ursq_gdp, lr_uncertainty_usffr_urinc_gdp, lr_uncertainty_usffr_gdp, lr_uncertainty_usffr_gdp_gdpsq, lr_uncertainty_usffr_gdp_gdpsq_ur),  include.ci = FALSE, digits = 3, stars = c(0.01,0.05,0.1))
+
+## The estimate for the inflation target
+
+lr_uncertainty_usffr_ur_est <- -coef(lr_uncertainty_usffr_ur)[2]/(2*coef(lr_uncertainty_usffr_ur)[3])
+lr_uncertainty_usffr_ur_est
+
+## Delta method standard error
+
+lr_uncertainty_usffr_ur_est_se <- deltamethod(~-x2/(2*x3),coef(lr_uncertainty_usffr_ur),lr_uncertainty_usffr_ur$vcov)
+print(lr_uncertainty_usffr_ur_est_se)
+
+## The estimate for the inflation target
+
+lr_uncertainty_usffr_ursq_est <- -coef(lr_uncertainty_usffr_ursq)[2]/(2*coef(lr_uncertainty_usffr_ursq)[3])
+lr_uncertainty_usffr_ursq_est
+
+## Delta method standard error
+
+lr_uncertainty_usffr_ursq_est_se <- deltamethod(~-x2/(2*x3),coef(lr_uncertainty_usffr_ursq),lr_uncertainty_usffr_ursq$vcov)
+print(lr_uncertainty_usffr_ursq_est_se)
+
+## The estimate for the inflation target
+
+lr_uncertainty_usffr_urinc_est <- -coef(lr_uncertainty_usffr_urinc)[2]/(2*coef(lr_uncertainty_usffr_urinc)[3])
+lr_uncertainty_usffr_urinc_est
+
+## Delta method standard error
+
+lr_uncertainty_usffr_urinc_est_se <- deltamethod(~-x2/(2*x3),coef(lr_uncertainty_usffr_urinc),lr_uncertainty_usffr_urinc$vcov)
+print(lr_uncertainty_usffr_urinc_est_se)
+
+## The estimate for the inflation target
+
+lr_uncertainty_usffr_ur_gdp_est <- -coef(lr_uncertainty_usffr_ur_gdp)[2]/(2*coef(lr_uncertainty_usffr_ur_gdp)[3])
+lr_uncertainty_usffr_ur_gdp_est
+
+## Delta method standard error
+
+lr_uncertainty_usffr_ur_gdp_est_se <- deltamethod(~-x2/(2*x3),coef(lr_uncertainty_usffr_ur_gdp),lr_uncertainty_usffr_ur_gdp$vcov)
+print(lr_uncertainty_usffr_ur_gdp_est_se)
+
+## The estimate for the inflation target
+
+lr_uncertainty_usffr_ursq_gdp_est <- -coef(lr_uncertainty_usffr_ursq_gdp)[2]/(2*coef(lr_uncertainty_usffr_ursq_gdp)[3])
+lr_uncertainty_usffr_ursq_gdp_est
+
+## Delta method standard error
+
+lr_uncertainty_usffr_ursq_gdp_est_se <- deltamethod(~-x2/(2*x3),coef(lr_uncertainty_usffr_ursq_gdp),lr_uncertainty_usffr_ursq_gdp$vcov)
+print(lr_uncertainty_usffr_ursq_gdp_est_se)
+
+## The estimate for the inflation target
+
+lr_uncertainty_usffr_urinc_gdp_est <- -coef(lr_uncertainty_usffr_urinc_gdp)[2]/(2*coef(lr_uncertainty_usffr_urinc_gdp)[3])
+lr_uncertainty_usffr_urinc_gdp_est
+
+## Delta method standard error
+
+lr_uncertainty_usffr_urinc_gdp_est_se <- deltamethod(~-x2/(2*x3),coef(lr_uncertainty_usffr_urinc_gdp),lr_uncertainty_usffr_urinc_gdp$vcov)
+print(lr_uncertainty_usffr_urinc_gdp_est_se)
 ```
 
 ```{r Regression with inflation and squared term, unemployment, GDP and exchange rate}
@@ -692,13 +816,25 @@ lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, function(x) deltamethod(~-x2/(2*x3
 #Looping over different forecast horizon averages
 n <- 4
 
-lr_inf_infsq_ur_gdp_ntwi <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + ntwi, se_type = 'stata'))
-
+lr_inf_infsq_ur_gdp_ntwi <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + ntwiqg, se_type = 'stata'))
+#lr_inf_infsq_ur_gdp_ntwi <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + ntwiqg, se_type = 'stata'))
+#lr_inf_infsq_ur_gdp_ntwi <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xinc_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + ntwiqg, se_type = 'stata'))
 summaries <- lapply(lr_inf_infsq_ur_gdp_ntwi, summary)
 lapply(summaries, function(x) x$coefficients[, c(1,4)])
 lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
 lapply(lr_inf_infsq_ur_gdp_ntwi, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
 
+#stargazer(model_inf_01,title = "Results",align = TRUE)
+
+## The estimate for the inflation target
+
+#model_inf_gdp_ur_01_est <- -coef(model_inf_gdp_ur_01)[2]/(2*coef(model_inf_gdp_ur_01)[3])
+#model_inf_gdp_ur_01_est
+
+## Delta method standard error
+
+#model_inf_gdp_ur_01_est_se <- deltamethod(~-x2/(2*x3),coef(model_inf_gdp_ur_01),vcovHC(model_inf_gdp_ur_01, type = 'HC1'))
+#print(model_inf_gdp_ur_01_est_se)
 ```
 
 ```{r Regression with inflation and squared term, unemployment, GDP and BBB corporate bond yield to 10 year AGS spread}
