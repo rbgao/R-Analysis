@@ -16,7 +16,7 @@ library("texreg")
 data <- read_excel("Complied Data.xlsx")
 
 #Forecast months only
-#data <- filter(data, fc_mth == 1)
+data <- filter(data, fc_mth == 1)
 
 #GFC Dummy
 data$Dates <- strptime(as.character(data$Dates), "%Y-%m-%d") # correct date format
