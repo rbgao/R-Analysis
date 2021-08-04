@@ -13,13 +13,15 @@ library("lmtest")
 library("sandwich")
 library("estimatr")
 library("texreg")
-data <- read_excel("Complied Data.xlsx")
+library("lattice")
+library("visreg")
+data <- read_excel("Compiled Data.xlsx")
 
 #Forecast months only
-data <- filter(data, fc_mth == 1)
+#data <- filter(data, fc_mth == 1)
 
 #GFC Dummy
-data$Dates <- strptime(as.character(data$Dates), "%Y-%m-%d") # correct date format
+data$Dates <- as.Date(as.character(data$Dates), "%Y-%m-%d") # correct date format
 data$Dates <- format(data$Dates, "%Y-%m-%d") # change to Date variable
 data$pre_gfc <- ifelse(data$Dates <="2007/01/01", 1, 0)
 data$post_gfc <- ifelse(data$Dates >="2009/01/01", 1, 0)
@@ -59,8 +61,9 @@ dec_gdp_6 <- ifelse(inc_gdp_6 == 0 ,1, 0 )
 netneg <- data$`Net negativity score`
 neg <- data$`Percentage negative`
 pos <- data$`Percentage positive`
-netnegur <- data$`Number of negative words including unemploy`
-
+netnegur <- data$`Net negativity score with unemploy`
+percentpositive <- data$`Percentage positive`
+percentnegative <- data$`Percentage negative`
 #Inflation
 inf_f_0 <- data$fccpiiq0
 inf_f_1 <- data$fccpiiq1
@@ -217,6 +220,33 @@ ur_f_06sq <- ur_f_06^2
 
 ur_f_xsq_dataframe <- data.frame(ur_f_01sq, ur_f_02sq, ur_f_03sq, ur_f_04sq, ur_f_05sq, ur_f_06sq)
 
+# Unemployment gap
+urg_f_0 <- ur_f_0 - 4.5
+urg_f_1 <- ur_f_1 - 4.5
+urg_f_2 <- ur_f_2 - 4.5
+urg_f_3 <- ur_f_3 - 4.5
+urg_f_4 <- ur_f_4 - 4.5
+urg_f_5 <- ur_f_5 - 4.5
+urg_f_6 <- ur_f_6 - 4.5
+
+#Unemployment gap averages
+urg_f_01 <- (urg_f_0+urg_f_1)/2
+urg_f_02 <- (urg_f_0+urg_f_1 + urg_f_2)/3
+urg_f_03 <- (urg_f_0+urg_f_1 + urg_f_2 + urg_f_3)/4
+urg_f_04 <- (urg_f_0+urg_f_1 + urg_f_2 + urg_f_3+urg_f_4)/5
+urg_f_05 <- (urg_f_0+urg_f_1 + urg_f_2 + urg_f_3+urg_f_4+urg_f_5)/6
+urg_f_06 <- (urg_f_0+urg_f_1 + urg_f_2 + urg_f_3+urg_f_4+urg_f_5+urg_f_6)/7
+
+urg_f_x_dataframe <- data.frame(urg_f_01, urg_f_02, urg_f_03, urg_f_04, urg_f_05, urg_f_06)
+
+urg_f_01sq <- urg_f_01^2
+urg_f_02sq <- urg_f_02^2
+urg_f_03sq <- urg_f_03^2
+urg_f_04sq <- urg_f_04^2
+urg_f_05sq <- urg_f_05^2
+urg_f_06sq <- urg_f_06^2
+
+urg_f_xsq_dataframe <- data.frame(urg_f_01sq, urg_f_02sq, urg_f_03sq, urg_f_04sq, urg_f_05sq, urg_f_06sq)
 #Dummy variable for governor
 phillowe <- data$`Phillip Lowe`
 
@@ -377,7 +407,7 @@ uncertainty_fcmth <- data_fcmth$Australia
 # Loop over different forecast horizon averages
 n <- 6
 
-lr_inf_infsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq <- lapply(1:n,function(x) lm_robust(netnegur ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] +phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq, summary)
 #lapply(summaries, function(x) x$coefficients[, c(1,4)])
@@ -389,7 +419,7 @@ print(lapply(lr_inf_infsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov)),
 
 ## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and a fixed effects for governor
 
-#model_inf_01 <- lm(netneg ~ inf_f_03+inf_f_03sq + phillowe)
+model_inf_02 <- lm(netneg ~ inf_f_02+ I(inf_f_02^2) + phillowe)
 #lmtest::coeftest(model_inf_01, vcov. = sandwich::vcovHC(model_inf_01, type = 'HC1'))
 #stargazer(model_inf_01,title = "Results",align = TRUE)
 
@@ -458,7 +488,7 @@ print(lapply(lr_inf_infsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef, x$v
 #Looping over different forecast horizon averages
 n <- 6
 
-lr_inf_infsq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x]+gdp_f_x_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_gdp_gdpsq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x] + gdp_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_gdp_gdpsq, summary)
 print(lapply(lr_inf_infsq_gdp_gdpsq, function(x) coef(summary(x))[,1:4]), digits = 3)
@@ -518,7 +548,7 @@ lapply(lr_inf_infsq_gdp_gdpsq_fcmth, function(x) deltamethod(~-x2/(2*x3),x$coef,
 #Looping over different forecast horizon averages
 n <- 6
 
-lr_inf_infsq_ur_ursq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] +ur_f_x_dataframe[,x]+ur_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
+lr_inf_infsq_ur_ursq <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] +ur_f_x_dataframe[,x] + ur_f_xsq_dataframe[,x] + phillowe, se_type = 'stata'))
 
 summaries <- lapply(lr_inf_infsq_ur_ursq, summary)
 print(lapply(lr_inf_infsq_ur_ursq, function(x) coef(summary(x))[,1:4]), digits = 3)
@@ -529,7 +559,7 @@ print(lapply(lr_inf_infsq_ur_ursq, function(x) deltamethod(~-x2/(2*x3),x$coef, x
 
 ## Linear regression model with average of 0-1 quarter ahead inflation, and its squared term, and unemployment rate, and a fixed effects for governor
 
-#model_inf_ur_01 <- lm(netneg ~ inf_f_01+inf_f_01sq +ur_f_01+ur_f_01sq + phillowe)
+model_inf_ur_02 <- lm(netneg ~ inf_f_02+I(inf_f_02^2) +ur_f_02+I(ur_f_02^2) + phillowe)
 #lmtest::coeftest(model_inf_ur_01, vcov. = sandwich::vcovHC(model_inf_ur_01, type = 'HC1'))
 #stargazer(model_inf_01,title = "Results",align = TRUE)
 
@@ -714,7 +744,7 @@ lapply(lr_inf_infsq_ur_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$
 #Looping over different forecast horizon averages
 #n <- 4
 
-#lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x]  + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
+#\lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x]  + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
 #lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xsq_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
 #lr_inf_infsq_ur_gdp_uncertainty_usffr <- lapply(1:n,function(x) lm_robust(netneg ~ inf_f_x_dataframe[,x]+inf_f_xsq_dataframe[,x] + ur_f_x_dataframe[,x] + ur_f_xinc_dataframe[,x] + gdp_f_x_dataframe[,x]+ phillowe + uncertainty + us_ffr, se_type = 'stata'))
 
@@ -724,23 +754,23 @@ lapply(lr_inf_infsq_ur_gdp_gdpsq, function(x) deltamethod(~-x2/(2*x3),x$coef, x$
 #print(lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3])), digits = 4)
 #print(lapply(lr_inf_infsq_ur_gdp_uncertainty_usffr, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov)), digits = 5)
 
-lr_uncertainty_usffr_ur <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02  + phillowe + ntwiqg +  us_ffr + uncertainty + rppiqg + aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_ur <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + ur_f_02 + ntwiyeg +  commpi_inf_q4 + rppiqg + us_ffr +0, se_type = 'stata')
 
-lr_uncertainty_usffr_ursq <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02sq  + phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_ursq <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02sq + ntwiyeg+   commpi_inf_q4 + rppiqg+ us_ffr+0, se_type = 'stata')
 
-lr_uncertainty_usffr_urinc <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02_inc  +  phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_urinc <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02_inc  + ntwiyeg +   commpi_inf_q4  + rppiqg+ us_ffr+0, se_type = 'stata')
 
-lr_uncertainty_usffr_ur_gdp <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + gdp_f_02  + phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_ur_gdp <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + ur_f_02 + gdp_f_02 + ntwiyeg+   commpi_inf_q4 + rppiqg+ us_ffr+0, se_type = 'stata')
 
-lr_uncertainty_usffr_ursq_gdp <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02sq  + gdp_f_02 + phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_ursq_gdp <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02sq  + gdp_f_02 + ntwiyeg +   commpi_inf_q4 + rppiqg+ us_ffr+0, se_type = 'stata')
 
-lr_uncertainty_usffr_urinc_gdp <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02_inc + gdp_f_02  +  phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_urinc_gdp <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + ur_f_02 + ur_f_02_inc + gdp_f_02  + ntwiyeg +   commpi_inf_q4  + rppiqg+ us_ffr+0, se_type = 'stata')
 
-lr_uncertainty_usffr_gdp <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + gdp_f_02 + phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_gdp <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + gdp_f_02 + ntwiyeg +   commpi_inf_q4  + rppiqg+ us_ffr+0, se_type = 'stata')
 
-lr_uncertainty_usffr_gdp_gdpsq <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + gdp_f_02 + gdp_f_02sq +  phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_gdp_gdpsq <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + gdp_f_02 + gdp_f_02sq + ntwiyeg +   commpi_inf_q4 + rppiqg+ us_ffr+0, se_type = 'stata')
 
-lr_uncertainty_usffr_gdp_gdpsq_ur <- lm_robust(netneg ~ inf_f_02 +inf_f_02sq + gdp_f_02 + gdp_f_02sq + ur_f_02+  phillowe+ ntwiqg +  us_ffr + uncertainty + rppiqg+ aus_bbb, se_type = 'stata')
+lr_uncertainty_usffr_gdp_gdpsq_ur <- lm_robust(netnegur ~ inf_f_02 +inf_f_02sq + gdp_f_02 + gdp_f_02sq + ur_f_02+ ntwiyeg +   commpi_inf_q4  + rppiqg+ us_ffr+0, se_type = 'stata')
 
 #lr_uncertainty_usffr_ur
 #lr_uncertainty_usffr_ursq
@@ -864,3 +894,84 @@ lapply(summaries, function(x) -x$coef[2]/(2*x$coef[3]))
 lapply(lr_inf_infsq_ur_gdp_ehpiyeg, function(x) deltamethod(~-x2/(2*x3),x$coef, x$vcov))
 
 ```
+
+```{r Graph}
+visreg(model_inf_02, "inf_f_02",gg = 'True')
+visreg(model_inf_ur_02, "ur_f_02", gg = 'True')
+```
+
+```{r Testing house price coefficient time varying}
+model_inf_rppi_02 <- lm_robust(netneg ~ inf_f_02+ I(inf_f_02^2) + rppiyeg + I(rppiyeg * post_2012) + phillowe, se_type = 'stata')
+summary(model_inf_rppi_02)
+```
+
+```{r Time varying inflation target}
+alpha_0_gridsearch <- seq(0,4,by=0.01)
+alpha_1_gridsearch <- seq(-1,1,by=0.001)
+data$obs <- as.numeric(rownames(data)) 
+dat <- data.frame()
+data <- filter(data, Dates <= as.Date("2019/06/04"))
+
+for (date in data$Dates)
+  {
+  s = date
+  s_num <- which(data$Dates == s)
+  data_subset = filter(data, Dates > s)
+  alpha_0_optimisation <- list("target_optimal" =    0,"rsquared_optimal" = 0)
+  
+if (s!= as.Date("2019/06/04"))
+{  for (alpha_0 in alpha_0_gridsearch)
+  {
+    model_alpha_0 <- lm(data_subset$`Net negativity score` ~ I(abs((data_subset$fccpiiq0+ data_subset$fccpiiq1 + data_subset$fccpiiq2)/3 - alpha_0)) + data_subset$`Phillip Lowe`)
+
+    if (summary(model_alpha_0)$r.squared > alpha_0_optimisation$rsquared_optimal )
+    {
+      alpha_0_optimisation$rsquared_optimal <- summary(model_alpha_0)$r.squared
+      alpha_0_optimisation$target_optimal <- alpha_0
+    }
+data_frame_alpha_0 <- data.frame(s_num, s, alpha_0_optimisation$target_optimal)
+}
+
+alpha_1_optimisation <- list("alpha_1_optimal" =    -1,"rsquared_optimal" = 0)
+    
+alpha_0 <- data_frame_alpha_0$alpha_0_optimisation.target_optimal
+for (alpha_1 in alpha_1_gridsearch) 
+  {
+  model_alpha_1 <- lm(data_subset$`Net negativity score` ~ I(abs((data_subset$fccpiiq0+ data_subset$fccpiiq1 + data_subset$fccpiiq2)/3 - (alpha_0+alpha_1*(s_num - data_subset$obs)))) + data_subset$`Phillip Lowe`)
+  if (summary(model_alpha_1)$r.squared > alpha_1_optimisation$rsquared_optimal)
+  {
+    alpha_1_optimisation$rsquared_optimal <- summary(model_alpha_1)$r.squared
+      alpha_1_optimisation$alpha_1_optimal <- alpha_1
+  }
+  data_frame_alpha_1 <- data.frame(alpha_1_optimisation$alpha_1_optimal)
+}
+
+alpha_1 <- data_frame_alpha_1$alpha_1_optimisation.alpha_1_optimal
+alpha_1_gridsearch = seq (-9*alpha_1, 11*alpha_1, by= (20*alpha_1/100))
+alpha_2_gridsearch = seq(-0.0001,0.0001, by = 0.00001)
+
+alpha_12_optimisation <- list("alpha_1_optimal" =   0, "alpha_2_optimal" = 0,"rsquared_optimal" = 0)
+
+for (alpha_1 in alpha_1_gridsearch)
+{
+  for (alpha_2 in alpha_2_gridsearch)
+  {
+    model_alpha_12<- lm(data_subset$`Net negativity score` ~ I(abs((data_subset$fccpiiq0+ data_subset$fccpiiq1 + data_subset$fccpiiq2)/3 - (alpha_0+alpha_1*(s_num - data_subset$obs) + alpha_2*(s_num - data_subset$obs)^2))) + data_subset$`Phillip Lowe`)
+    if (summary(model_alpha_12)$r.squared > alpha_12_optimisation$rsquared_optimal)
+  {
+    alpha_12_optimisation$rsquared_optimal <- summary(model_alpha_12)$r.squared
+      alpha_12_optimisation$alpha_1_optimal <- alpha_1
+      alpha_12_optimisation$alpha_2_optimal <- alpha_2
+  }
+  data_frame_alpha_12 <- data.frame(alpha_12_optimisation$alpha_1_optimal, alpha_12_optimisation$alpha_2_optimal)
+  data_frame <- merge(data_frame_alpha_0, data_frame_alpha_1)
+  data_frame <- merge(data_frame, data_frame_alpha_12)
+}
+  }
+  
+}
+dat <- rbind(dat, data_frame)
+}
+```
+
+
