@@ -907,11 +907,11 @@ summary(model_inf_rppi_02)
 
 ```{r Time varying inflation target}
 alpha_0_gridsearch <- seq(0,4,by=0.01)
-alpha_1_gridsearch <- seq(-1,1,by=0.001)
 data$obs <- as.numeric(rownames(data)) 
 dat <- data.frame()
 data <- filter(data, Dates <= as.Date("2019/06/04"))
-
+dat_final <- data.frame()
+final_optimisation <- list("s_optimal" = 0, "alpha_0_optimal" = 0,"alpha_1_optimal" = 0, "alpha_2_optimal" = 0,"rsquared_optimal" = 0)
 for (date in data$Dates)
   {
   s = date
@@ -932,9 +932,11 @@ if (s!= as.Date("2019/06/04"))
 data_frame_alpha_0 <- data.frame(s_num, s, alpha_0_optimisation$target_optimal)
 }
 
+
 alpha_1_optimisation <- list("alpha_1_optimal" =    -1,"rsquared_optimal" = 0)
     
 alpha_0 <- data_frame_alpha_0$alpha_0_optimisation.target_optimal
+alpha_1_gridsearch <- seq(-1,1,by=0.001)
 for (alpha_1 in alpha_1_gridsearch) 
   {
   model_alpha_1 <- lm(data_subset$`Net negativity score` ~ I(abs((data_subset$fccpiiq0+ data_subset$fccpiiq1 + data_subset$fccpiiq2)/3 - (alpha_0+alpha_1*(s_num - data_subset$obs)))) + data_subset$`Phillip Lowe`)
@@ -943,9 +945,21 @@ for (alpha_1 in alpha_1_gridsearch)
     alpha_1_optimisation$rsquared_optimal <- summary(model_alpha_1)$r.squared
       alpha_1_optimisation$alpha_1_optimal <- alpha_1
   }
-  data_frame_alpha_1 <- data.frame(alpha_1_optimisation$alpha_1_optimal)
 }
-
+while (alpha_1_optimisation$alpha_1_optimal == 0)
+{
+  alpha_1_gridsearch <- 0.1 * alpha_1_gridsearch
+  for (alpha_1 in alpha_1_gridsearch) 
+  {
+  model_alpha_1 <- lm(data_subset$`Net negativity score` ~ I(abs((data_subset$fccpiiq0+ data_subset$fccpiiq1 + data_subset$fccpiiq2)/3 - (alpha_0+alpha_1*(s_num - data_subset$obs)))) + data_subset$`Phillip Lowe`)
+  if (summary(model_alpha_1)$r.squared > alpha_1_optimisation$rsquared_optimal)
+  {
+    alpha_1_optimisation$rsquared_optimal <- summary(model_alpha_1)$r.squared
+      alpha_1_optimisation$alpha_1_optimal <- alpha_1
+  }
+  }
+}
+data_frame_alpha_1 <- data.frame(alpha_1_optimisation$alpha_1_optimal)
 alpha_1 <- data_frame_alpha_1$alpha_1_optimisation.alpha_1_optimal
 alpha_1_gridsearch = seq (-9*alpha_1, 11*alpha_1, by= (20*alpha_1/100))
 alpha_2_gridsearch = seq(-0.0001,0.0001, by = 0.00001)
@@ -966,12 +980,45 @@ for (alpha_1 in alpha_1_gridsearch)
   data_frame_alpha_12 <- data.frame(alpha_12_optimisation$alpha_1_optimal, alpha_12_optimisation$alpha_2_optimal)
   data_frame <- merge(data_frame_alpha_0, data_frame_alpha_1)
   data_frame <- merge(data_frame, data_frame_alpha_12)
-}
   }
-  
 }
 dat <- rbind(dat, data_frame)
+alpha_1 <- data_frame_alpha_12$alpha_12_optimisation.alpha_1_optimal
+alpha_2 <- data_frame_alpha_12$alpha_12_optimisation.alpha_2_optimal
+data$indicator <- ifelse(s_num>=data$obs,1,0)
+
+  model_final <- lm(data$`Net negativity score` ~ I(abs((data$fccpiiq0+ data$fccpiiq1 + data$fccpiiq2)/3 - (alpha_0 + alpha_1*(s_num - data$obs)+ alpha_2*(s_num - data$obs)^2)) * data$indicator ) + I(abs((data$fccpiiq0+ data$fccpiiq1 + data$fccpiiq2)/3 - (alpha_0 + alpha_1*(s_num - data$obs)+ alpha_2*(s_num - data$obs)^2)) *(1 - data$indicator)  ) + data$`Phillip Lowe`)
+
+  if (summary(model_final)$r.squared > final_optimisation$rsquared_optimal)
+  {
+    final_optimisation$s_optimal <- s
+    final_optimisation$rsquared_optimal <- summary(model_alpha_12)$r.squared
+      final_optimisation$alpha_0_optimal <- alpha_0
+      final_optimisation$alpha_1_optimal <- alpha_1
+      final_optimisation$alpha_2_optimal <- alpha_2
+  }
 }
+}
+print(final_optimisation)
 ```
+
+```{r Asymmetric inflation preferences}
+pi_gridsearch <- seq(0,3,by = 0.01)
+ssr <- 99999999999
+for (pi in pi_gridsearch)
+{
+  dummy = ifelse(inf_f_02>pi,1, 0)
+  model <- lm(netneg ~ I((inf_f_02 - pi)*dummy) + I((inf_f_02 - pi)*(1-dummy)) + phillowe)
+  model_ssr <- sum(resid(model)^2)
+  if (model_ssr < ssr)
+  {
+    ssr <- model_ssr
+    dataframe <- data.frame(pi,model_ssr, model$coef)
+    
+  }
+}
+print(dataframe)
+```
+
 
 
